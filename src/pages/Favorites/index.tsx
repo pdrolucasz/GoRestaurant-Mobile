@@ -1,3 +1,4 @@
+import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Image } from 'react-native';
 
@@ -43,7 +44,13 @@ const Favorites: React.FC = () => {
     }
 
     loadFavorites();
-  }, []);
+  }, [favorites]);
+
+  const { navigate } = useNavigation();
+
+  async function handleNavigate(id: number): Promise<void> {
+    navigate('FoodDetails', { id });
+  }
 
   return (
     <Container>
@@ -56,7 +63,7 @@ const Favorites: React.FC = () => {
           data={favorites}
           keyExtractor={item => String(item.id)}
           renderItem={({ item }) => (
-            <Food activeOpacity={0.6}>
+            <Food activeOpacity={0.6} onPress={() => handleNavigate(item.id)}>
               <FoodImageContainer>
                 <Image
                   style={{ width: 88, height: 88 }}

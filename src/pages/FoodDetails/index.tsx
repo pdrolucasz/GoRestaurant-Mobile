@@ -91,6 +91,24 @@ const FoodDetails: React.FC = () => {
     loadFood();
   }, [routeParams]);
 
+  useEffect(() => {
+    async function checkFavorite(): Promise<void> {
+      const response = await api.get('/favorites');
+
+      const fav = response.data.filter(
+        (favorite: Food) => favorite.id === routeParams.id,
+      );
+
+      if (fav.length === 0) {
+        setIsFavorite(false);
+      } else {
+        setIsFavorite(true);
+      }
+    }
+
+    checkFavorite();
+  }, [routeParams.id]);
+
   function handleIncrementExtra(id: number): void {
     setExtras(
       extras.map(extra =>
@@ -143,21 +161,32 @@ const FoodDetails: React.FC = () => {
       return accumulator + extra.quantity * extra.value;
     }, 0);
 
-    const foodTotal = food.price;
+    const foodTotal = Number(food.price);
 
     return formatValue((extraTotal + foodTotal) * foodQuantity);
   }, [extras, food, foodQuantity]);
 
   async function handleFinishOrder(): Promise<void> {
-    const infos = {
+    const response = await api.get('/orders');
+
+    const { data } = response;
+
+    const res = cartTotal.split('R$').join('').split(',').join('.');
+
+    food.price = Number(res);
+
+    const newData = {
       ...food,
-      ...extras,
-      product_id: food.id,
+      id: data.length + 1,
+      extras: { ...extras },
+      quantity: foodQuantity,
     };
 
-    const response = await api.post('/orders', infos);
-
-    console.log(response.data);
+    try {
+      await api.post('/orders', newData);
+    } catch (err) {
+      console.log(err);
+    }
 
     navigation.navigate('Home');
   }
